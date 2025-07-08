@@ -1,0 +1,47 @@
+# Git Ignore File for Project
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+/Makefile
+/cmake_install.cmake
+
+# SQlite and Database files
+/data/*.sqlite
+/data/*.db
+/data/*.log
+
+# Temporary files
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Vim/Neovim
+*.log
+Session.vim
+.netrwhist
+
+# macOS
+.DS_Store
+
+# Compiled files
+*.o
+*.obj
+*.so
+*.dll
+*.exe
+*.out
+
+# Visual Studio Code and JetBrains IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# Ignore generated documentation files
+/docs/*.html
+/docs/*.pdf
+/docs/*.md
+
+# config.json.template
+!config.json

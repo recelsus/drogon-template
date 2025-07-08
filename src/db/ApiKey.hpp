@@ -1,0 +1,7 @@
+// vim: filetype=cpp:expandtab:ts=4:sw=4:softtabstop=4
+#pragma once
+
+namespace api_db {
+    void initialize();
+}
+
