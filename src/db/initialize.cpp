@@ -77,6 +77,7 @@ static void createApiKeyTable() {
     const char *sql = R"sql(
         CREATE TABLE IF NOT EXISTS api_keys (
             key TEXT PRIMARY KEY,
+            level TEXT CHECK(level IN ('public', 'privileged')) DEFAULT 'public',
             description TEXT DEFAULT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             expired_at DATETIME DEFAULT NULL

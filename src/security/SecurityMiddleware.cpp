@@ -4,7 +4,7 @@
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 
-#include "config/AllowedOrigins.hpp"
+#include "./AllowedOrigins.hpp"
 #include "ApiKeyValidator.hpp"
 
 namespace security {
@@ -48,20 +48,29 @@ std::pair<bool, std::string> validateApiRequest(const drogon::HttpRequestPtr &re
     }
 
     if (api_key.empty()) {
-        return {false, "denied: missing API key"}; // API key is required for API requests
+        return {false, "denied: missing API key"}; // If the API key is missing, deny the request
     }
 
-    if (!api_validator::isValidApiKey(api_key)) {
-        return {false, "denied: invalid API key"}; // If the API key is invalid, deny the request
+    auto level_opt = api_validator::getApiKeyLevel(api_key);
+    if (!level_opt.has_value()) {
+        return {false, "denied: invalid or expired API key"}; // If the API key is invalid or expired, deny the request
     }
 
-    bool origin_ok = origin.empty() || config::isAllowedOrigin(origin);
-    bool referer_ok = referer.empty() || config::isAllowedOrigin(referer);
+    const std::string &level = level_opt.value();
+
+    if (level == "privileged") {
+        return {true, "allowed: privileged API key"}; // Privileged API keys are allowed
+    }
+
+    if (level == "public") {
+        bool origin_ok = !origin.empty() && config::isAllowedOrigin(origin);
+        bool referer_ok = !referer.empty() && config::isAllowedOrigin(referer);
     
-    if (!origin_ok && !referer_ok) {
-        return {false, "denied: invalid origin or referer"}; // If both origin and referer are invalid, deny the request
+        if (origin_ok || referer_ok) {
+            return {true, "allowed: public API key with valid origin or referer"};
+        }
     }
-    return {true, "allowed: API request validated successfully"};
+    return {false, "denied: public API key with invalid origin or referer"};
 }
 } // namespace security
 
