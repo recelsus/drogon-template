@@ -14,7 +14,7 @@ add_executable(drogon
     src/security/SecurityMiddleware.cpp
     src/security/ApiKeyValidator.cpp
     src/security/IpControl.cpp
-    src/config/AllowedOrigins.cpp
+    src/security/AllowedOrigins.cpp
 )
 
 target_link_libraries(drogon 
