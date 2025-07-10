@@ -4,8 +4,9 @@
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
 
-#include "./AllowedOrigins.hpp"
+#include "AllowedOrigins.hpp"
 #include "ApiKeyValidator.hpp"
+#include "RateLimiter.hpp"
 
 namespace security {
 
@@ -24,6 +25,12 @@ std::pair<bool, std::string> validatePublicRequest(const drogon::HttpRequestPtr 
 
     if (ip_control::isWhitelisted(ip)) {
         return {true, "allowed: IP in whitelist"}; // Whitelisted IPs are allowed by default
+    }
+
+    constexpr int MAX_REQUESTS = 20;
+    constexpr int WINDOW_SECONDS = 60;
+    if (!rate_limiter::isAllowed(ip, endpoint, MAX_REQUESTS, WINDOW_SECONDS)) {
+        return {false, "denied: rate limit exceeded"}; // If the rate limit is exceeded, deny the request
     }
 
     return {true, "allowed: no specific rules"}; // Default to allowed if not blacklisted or whitelisted
@@ -58,6 +65,12 @@ std::pair<bool, std::string> validateApiRequest(const drogon::HttpRequestPtr &re
 
     const std::string &level = level_opt.value();
 
+    constexpr int MAX_REQUESTS = 10;
+    constexpr int WINDOW_SECONDS = 60;
+    if (!rate_limiter::isAllowed(ip, endpoint, MAX_REQUESTS, WINDOW_SECONDS)) {
+        return {false, "denied: rate limit exceeded"}; // If the rate limit is exceeded, deny the request
+    }
+
     if (level == "privileged") {
         return {true, "allowed: privileged API key"}; // Privileged API keys are allowed
     }
@@ -65,9 +78,11 @@ std::pair<bool, std::string> validateApiRequest(const drogon::HttpRequestPtr &re
     if (level == "public") {
         bool origin_ok = !origin.empty() && config::isAllowedOrigin(origin);
         bool referer_ok = !referer.empty() && config::isAllowedOrigin(referer);
-    
-        if (origin_ok || referer_ok) {
-            return {true, "allowed: public API key with valid origin or referer"};
+
+        if (origin_ok) {
+            return {true, "allowed: public API key with valid origin"};
+        } else if (referer_ok) {
+            return {true, "allowed: public API key with valid referer"};
         }
     }
     return {false, "denied: public API key with invalid origin or referer"};

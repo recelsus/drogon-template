@@ -93,11 +93,39 @@ static void createApiKeyTable() {
     sqlite3_close(db);
 }
 
+static void createRateLimitTable() {
+    sqlite3 *db;
+    std::string path = DB_DIR + "/rate_limit.sqlite";
+    if (sqlite3_open(path.c_str(), &db) != SQLITE_OK) {
+        std::cerr << "Failed to open rate_limit DB\n";
+        return;
+    }
+
+    const char *sql = R"sql(
+        CREATE TABLE IF NOT EXISTS rate_limit (
+            key TEXT NOT NULL,
+            endpoint TEXT NOT NULL,
+            window_start INTEGER NOT NULL,
+            count INTEGER NOT NULL,
+            PRIMARY KEY (key, endpoint)
+        );
+    )sql";
+
+    char *errmsg = nullptr;
+    if (sqlite3_exec(db, sql, nullptr, nullptr, &errmsg) != SQLITE_OK) {
+        std::cerr << "Failed to create rate_limit table: " << errmsg << "\n";
+        sqlite3_free(errmsg);
+    }
+
+    sqlite3_close(db);
+}
+
 void initialize() {
     ensureDirectoryExists();
     createAccessLogTable();
     createIpListTables();
     createApiKeyTable();
+    createRateLimitTable();
 }
 } // namespace init_db
 

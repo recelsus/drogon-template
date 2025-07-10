@@ -9,12 +9,14 @@ find_package(Drogon REQUIRED)
 add_executable(drogon
     src/main.cpp
     src/routes/RootHandler.cpp
+    src/routes/SqliteApiHandler.cpp
     src/db/initialize.cpp
     src/db/AccessLog.cpp
-    src/security/SecurityMiddleware.cpp
+    src/security/AllowedOrigins.cpp
     src/security/ApiKeyValidator.cpp
     src/security/IpControl.cpp
-    src/security/AllowedOrigins.cpp
+    src/security/RateLimiter.cpp
+    src/security/SecurityMiddleware.cpp
 )
 
 target_link_libraries(drogon 
